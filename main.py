@@ -37,15 +37,12 @@ def health_check():
 @app.post("/process-voice")
 async def process_voice(request: Request):
     try:
-        # 1. Read raw PCM/WAV audio bytes sent from ESP32
         audio_bytes = await request.body()
 
         if len(audio_bytes) < 1000:
-            # Fallback if recording is empty/too short
             user_prompt = "Hello! Please introduce yourself briefly."
             response = model.generate_content(user_prompt)
         else:
-            # 2. Query Gemini directly with the audio payload [2, 3]
             audio_part = {
                 "mime_type": "audio/wav",
                 "data": audio_bytes
@@ -55,24 +52,20 @@ async def process_voice(request: Request):
         bot_reply = response.text if response.text else "Hello, I am Atheria!"
         print(f"Atheria reply: {bot_reply}")
 
-        # 3. Convert text reply to Speech (gTTS)
+        # Convert reply to speech
         tts = gTTS(text=bot_reply, lang='en', slow=False)
         
-        # Save audio to RAM buffer
         mp3_fp = io.BytesIO()
         tts.write_to_fp(mp3_fp)
         mp3_fp.seek(0)
 
-        # Convert MP3 to 16kHz WAV PCM for ESP32 I2S output [4]
+        # Convert MP3 to 16kHz, 1-channel (mono), 16-bit PCM
         audio_segment = AudioSegment.from_file(mp3_fp, format="mp3")
         audio_segment = audio_segment.set_frame_rate(16000).set_channels(1).set_sample_width(2)
 
-        wav_fp = io.BytesIO()
-        audio_segment.export(wav_fp, format="wav")
-        wav_fp.seek(0)
-
-        return Response(content=wav_fp.read(), media_type="audio/wav")
+        # Return RAW PCM bytes directly (No WAV header)
+        return Response(content=audio_segment.raw_data, media_type="application/octet-stream")
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error in backend: {e}")
         return Response(content=b"", status_code=500)
