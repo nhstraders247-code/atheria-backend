@@ -14,8 +14,8 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Custom System Prompt for Atheria
-CREATOR_NAME = "Your Name"         # Replace with your name
-SCHOOL_NAME = "Your School Name"   # Replace with your school name
+CREATOR_NAME = "Ratul"         # Replace with your name
+SCHOOL_NAME = "Thakurnagar High School"   # Replace with your school name
 
 SYSTEM_INSTRUCTION = f"""
 Your name is Atheria. You are an AI voice assistant created by {CREATOR_NAME} for {SCHOOL_NAME}.
@@ -26,7 +26,7 @@ Keep responses short (1-2 sentences maximum) so they can be converted to speech 
 """
 
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
+    model_name="gemini-2.0-flash",
     system_instruction=SYSTEM_INSTRUCTION
 )
 
